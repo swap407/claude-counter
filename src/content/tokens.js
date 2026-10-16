@@ -111,25 +111,38 @@
 		return stableStringify(minimal);
 	}
 
-	function stringifyMessageCountables(message) {
-		const parts = [];
+	// Countable text of one message, split by category for the breakdown tooltip.
+	function messageCountableParts(message) {
+		const text = [];
+		const tools = [];
+		const attachments = [];
 
 		// Message content blocks (primary source for tools, text, etc).
 		const content = Array.isArray(message?.content) ? message.content : [];
 		for (const item of content) {
 			const s = stringifyCountableContentItem(item);
-			if (s) parts.push(s);
+			if (!s) continue;
+			if (item.type === 'tool_use' || item.type === 'tool_result') tools.push(s);
+			else text.push(s);
 		}
 
 		// Attachment extracted content (observable, already text).
-		const attachments = Array.isArray(message?.attachments) ? message.attachments : [];
-		for (const a of attachments) {
+		const files = Array.isArray(message?.attachments) ? message.attachments : [];
+		for (const a of files) {
 			if (typeof a?.extracted_content === 'string' && a.extracted_content) {
-				parts.push(a.extracted_content);
+				attachments.push(a.extracted_content);
 			}
 		}
 
-		return parts.join('\n');
+		return { text: text.join('\n'), tools: tools.join('\n'), attachments: attachments.join('\n') };
+	}
+
+	function countParts(parts) {
+		return {
+			text: countTokens(parts.text),
+			tools: countTokens(parts.tools),
+			attachments: countTokens(parts.attachments)
+		};
 	}
 
 	async function hashString(str) {
@@ -152,18 +165,19 @@
 
 	class TokenCache {
 		constructor() {
-			this._byMessageId = new Map(); // uuid -> { fp, tokens }
+			this._byMessageId = new Map(); // uuid -> { fp, counts }
 		}
 
-		async getMessageTokens(messageId, messageText) {
-			const fp = await fingerprint(messageText);
-			if (!fp) return countTokens(messageText);
+		// Returns { text, tools, attachments } token counts for one message.
+		async getMessageTokens(messageId, parts) {
+			const fp = await fingerprint(`${parts.text}\u0000${parts.tools}\u0000${parts.attachments}`);
+			if (!fp) return countParts(parts);
 			const cached = this._byMessageId.get(messageId);
-			if (cached && cached.fp === fp) return cached.tokens;
+			if (cached && cached.fp === fp) return cached.counts;
 
-			const tokens = countTokens(messageText);
-			this._byMessageId.set(messageId, { fp, tokens });
-			return tokens;
+			const counts = countParts(parts);
+			this._byMessageId.set(messageId, { fp, counts });
+			return counts;
 		}
 
 		pruneToMessageIds(keepIds) {
@@ -181,7 +195,7 @@
 		const trunkIds = trunk.map((m) => m.uuid).filter(Boolean);
 		tokenCache.pruneToMessageIds(trunkIds);
 
-		let totalTokens = 0;
+		const breakdown = { userText: 0, assistantText: 0, tools: 0, attachments: 0 };
 		let lastAssistantMs = null;
 
 		for (const msg of trunk) {
@@ -192,15 +206,21 @@
 				}
 			}
 
-			const msgText = stringifyMessageCountables(msg);
-			const msgTokens = msg?.uuid ? await tokenCache.getMessageTokens(msg.uuid, msgText) : countTokens(msgText);
-			totalTokens += msgTokens;
+			const parts = messageCountableParts(msg);
+			const counts = msg?.uuid ? await tokenCache.getMessageTokens(msg.uuid, parts) : countParts(parts);
+			if (msg?.sender === 'assistant') breakdown.assistantText += counts.text;
+			else breakdown.userText += counts.text;
+			breakdown.tools += counts.tools;
+			breakdown.attachments += counts.attachments;
 		}
+		const totalTokens = breakdown.userText + breakdown.assistantText + breakdown.tools + breakdown.attachments;
 		const cachedUntil = lastAssistantMs ? lastAssistantMs + CC.CONST.CACHE_WINDOW_MS : null;
 
 		return {
 			trunkMessageCount: trunk.length,
 			totalTokens,
+			breakdown,
+			model: typeof conversation?.model === 'string' ? conversation.model : null,
 			lastAssistantMs,
 			cachedUntil
 		};

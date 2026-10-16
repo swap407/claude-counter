@@ -1,10 +1,19 @@
+/* Layout is defined here rather than with claude.ai's utility classes, which change between
+   redesigns. */
+
 /* Header: tokens + cache timer */
 .cc-header {
 	margin-top: 2px;
+	font-size: 12px;
+	line-height: 16px;
 	user-select: none;
 }
 
-.cc-headerItem {
+.cc-headerItem,
+.cc-lengthGroup,
+.cc-barWrap {
+	display: inline-flex;
+	align-items: center;
 	white-space: nowrap;
 }
 
@@ -15,10 +24,17 @@
 	padding-inline: 8px !important;
 }
 
-/* Usage row: session + weekly */
+/* Usage row: session + weekly + per-model limits */
 .cc-usageRow {
 	position: relative;
 	z-index: 50;
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	gap: 4px 12px;
+	width: 100%;
+	font-size: 11px;
+	line-height: 16px;
 	cursor: pointer;
 	user-select: none;
 	transition: opacity 150ms ease;
@@ -28,26 +44,28 @@
 	opacity: 0.6;
 }
 
+/* Values restored from the last page load, until claude.ai confirms them */
+.cc-usageRow--stale {
+	opacity: 0.7;
+}
+
 /* Row placed inside the composer card, below the overlaid toolbar */
 .cc-usageRow--composer {
 	box-sizing: border-box;
 	padding: 6px 6px 2px;
 }
 
+/* Groups share the row; when three don't fit, they wrap instead of squeezing the bars */
 .cc-usageGroup {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	flex: 1;
+	flex: 1 1 auto;
 	min-width: 0;
 }
 
-.cc-usageGroup--single {
-	width: 100%;
-}
-
-.cc-usageGroup--weekly {
-	justify-content: flex-end;
+.cc-usageRow--compact .cc-usageGroup {
+	gap: 6px;
 }
 
 .cc-usageText {
@@ -110,22 +128,34 @@
 
 .cc-bar--usage {
 	height: 10px;
-	flex: 1;
-	min-width: 24px;
+	flex: 1 1 40px;
+	min-width: 40px;
 }
 
-/* Tooltips */
+/* Tooltips (own colors: claude.ai's utility class names change between redesigns) */
 .cc-tooltip {
 	position: fixed;
 	z-index: 9999;
-	padding: 4px 8px;
-	border-radius: 4px;
+	max-width: 420px;
+	padding: 6px 9px;
+	border-radius: 6px;
 	font-size: 12px;
+	line-height: 1.45;
 	white-space: pre-line;
 	user-select: none;
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity 200ms ease;
+	background: #262624;
+	color: #f5f4ef;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+html[data-mode='light'] .cc-tooltip {
+	background: #ffffff;
+	color: #1f1e1d;
+	border: 1px solid #dedcd5;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .cc-tooltipTrigger {
@@ -133,6 +163,146 @@
 	-webkit-user-select: none;
 	user-select: none;
 	cursor: help;
+}
+
+/* Settings panel */
+.cc-settingsOverlay {
+	--cc-panel-bg: #262624;
+	--cc-panel-fg: #f5f4ef;
+	--cc-panel-muted: #a3a29c;
+	--cc-panel-border: #3e3e3a;
+	--cc-panel-accent: #2c84db;
+
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: rgba(0, 0, 0, 0.45);
+	font-family: inherit;
+}
+
+.cc-settingsOverlay[data-mode='light'] {
+	--cc-panel-bg: #ffffff;
+	--cc-panel-fg: #1f1e1d;
+	--cc-panel-muted: #6b6a65;
+	--cc-panel-border: #dedcd5;
+	--cc-panel-accent: #2c84db;
+}
+
+.cc-settings {
+	width: min(480px, 100%);
+	max-height: calc(100vh - 32px);
+	overflow: auto;
+	box-sizing: border-box;
+	padding: 18px 20px;
+	border: 1px solid var(--cc-panel-border);
+	border-radius: 12px;
+	background: var(--cc-panel-bg);
+	color: var(--cc-panel-fg);
+	font-size: 13px;
+	line-height: 1.45;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.cc-settings__header {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.cc-settings__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.cc-settings__version {
+	color: var(--cc-panel-muted);
+	font-size: 12px;
+}
+
+.cc-settings__section {
+	margin: 14px 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--cc-panel-muted);
+}
+
+.cc-settings__note {
+	margin: 0 0 6px;
+	color: var(--cc-panel-muted);
+	font-size: 12px;
+}
+
+.cc-settings__note:empty {
+	display: none;
+}
+
+.cc-settings__row {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 5px 0;
+	cursor: pointer;
+}
+
+.cc-settings__row input[type='checkbox'] {
+	margin-top: 3px;
+	accent-color: var(--cc-panel-accent);
+	flex-shrink: 0;
+}
+
+.cc-settings__row--select {
+	align-items: center;
+	justify-content: space-between;
+}
+
+.cc-settings__select {
+	max-width: 60%;
+	padding: 4px 6px;
+	border: 1px solid var(--cc-panel-border);
+	border-radius: 6px;
+	background: var(--cc-panel-bg);
+	color: var(--cc-panel-fg);
+	font: inherit;
+}
+
+.cc-settings__footer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.cc-settings__footer a {
+	color: var(--cc-panel-accent);
+	text-decoration: underline;
+}
+
+.cc-settings__spacer {
+	flex: 1;
+}
+
+.cc-settings__btn {
+	padding: 6px 12px;
+	border: 1px solid var(--cc-panel-border);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--cc-panel-fg);
+	font: inherit;
+	cursor: pointer;
+}
+
+.cc-settings__btn--primary {
+	border-color: var(--cc-panel-accent);
+	background: var(--cc-panel-accent);
+	color: #ffffff;
 }
 
 /* Hide optional elements completely (no layout space) */

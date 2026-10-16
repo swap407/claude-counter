@@ -3,6 +3,11 @@
 
 	const CC_MARKER = 'ClaudeCounter';
 
+	// Runs in the page: injected by the extension, or inlined in the userscript. Install once,
+	// even if both are active.
+	if (window.__ccBridgeInstalled) return;
+	window.__ccBridgeInstalled = true;
+
 	// Capture original fetch before anyone else can wrap it
 	const originalFetch = window.fetch;
 
@@ -22,20 +27,35 @@
 		return result;
 	};
 
+	// Newer claude.ai accounts send messages over Connect RPC instead of /completion SSE:
+	// PerformAction starts a turn and StreamTimeline streams the reply as protobuf frames.
+	// The frames aren't parsed; the stream going quiet is treated as "reply finished".
+	// e.g. /claudeai-rpc/anthropic.bard.api.v1alpha.ConversationService/PerformAction
+	const CONNECT_PERFORM_ACTION = '.ConversationService/PerformAction';
+	const CONNECT_STREAM_TIMELINE = '.ConversationService/StreamTimeline';
+	const STREAM_IDLE_MS = 2500;
+
 	window.fetch = async (...args) => {
 		const url = toAbsoluteUrl(args[0]);
 		const opts = args[1] || {};
+		const method = String(opts.method || (args[0] instanceof Request ? args[0].method : 'GET')).toUpperCase();
 
 		// Detect generation start (completion requests)
-		if (url && opts.method === 'POST' && (url.includes('/completion') || url.includes('/retry_completion'))) {
+		if (url && method === 'POST' && (url.includes('/completion') || url.includes('/retry_completion'))) {
 			post('cc:generation_start', {});
+		}
+		if (url && method === 'POST' && url.includes(CONNECT_PERFORM_ACTION)) {
+			post('cc:generation_start', { transport: 'connect' });
 		}
 
 		const response = await originalFetch.apply(window, args);
 
 		const contentType = response.headers.get('content-type') || '';
 		if (contentType.includes('event-stream')) {
-			handleEventStream(response);
+			handleEventStream(response, { isReply: !!url && (url.includes('/completion') || url.includes('/retry_completion')) });
+		}
+		if (url && url.includes(CONNECT_STREAM_TIMELINE)) {
+			watchStreamActivity(response);
 		}
 
 		// Catch conversation tree fetches
@@ -93,7 +113,37 @@
 		}
 	}
 
-	async function handleEventStream(response) {
+	// Post cc:generation_idle once a streamed response has received data and then gone quiet
+	// (or ended), so the content script can re-fetch usage and the conversation.
+	async function watchStreamActivity(response) {
+		let idleTimer = null;
+		let sawData = false;
+		const fireIdle = () => {
+			idleTimer = null;
+			if (!sawData) return;
+			sawData = false;
+			post('cc:generation_idle', { transport: 'connect' });
+		};
+		try {
+			const reader = response.clone().body?.getReader?.();
+			if (!reader) return;
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				if (value?.byteLength) {
+					sawData = true;
+					clearTimeout(idleTimer);
+					idleTimer = setTimeout(fireIdle, STREAM_IDLE_MS);
+				}
+			}
+		} catch {
+			// stream aborted (navigation, cancel); fall through
+		}
+		clearTimeout(idleTimer);
+		fireIdle();
+	}
+
+	async function handleEventStream(response, { isReply = false } = {}) {
 		try {
 			const cloned = response.clone();
 			const reader = cloned.body?.getReader?.();
@@ -122,6 +172,7 @@
 					}
 				}
 			}
+			if (isReply) post('cc:generation_idle', { transport: 'sse' });
 		} catch {
 			// best-effort; don't break claude.ai
 		}

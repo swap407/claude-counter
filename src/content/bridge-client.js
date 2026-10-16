@@ -91,8 +91,12 @@
 	function injectBridgeOnce() {
 		if (bridgeReadyPromise) return bridgeReadyPromise;
 
+		// Userscript build: bridge.js is inlined and already running in the page.
 		const runtime = getRuntime();
-		if (!runtime) return Promise.resolve(false);
+		if (!runtime?.getURL) {
+			bridgeReadyPromise = Promise.resolve(true);
+			return bridgeReadyPromise;
+		}
 
 		if (document.getElementById(CC.DOM.BRIDGE_SCRIPT_ID)) {
 			return Promise.resolve(true);

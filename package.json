@@ -1,0 +1,12 @@
+{
+  "name": "claude-counter",
+  "private": true,
+  "description": "Token count, cache timer and usage bars for claude.ai (browser extension + userscript).",
+  "homepage": "https://github.com/swap407/claude-counter",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-userscript.mjs",
+    "check": "node scripts/build-userscript.mjs --check && node --check src/content/main.js"
+  }
+}
