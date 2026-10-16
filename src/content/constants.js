@@ -8,6 +8,10 @@
 		MODEL_SELECTOR_DROPDOWN: '[data-testid="model-selector-dropdown"]',
 		CHAT_INPUT: '[data-testid="chat-input"]',
 		CHAT_PROJECT_WRAPPER: '.chat-project-wrapper',
+		CHAT_HEADER: '[data-testid="chat-header"]',
+		CHAT_TITLE: '[data-testid="chat-title-split"]',
+		// Either the legacy title menu or the newer split title button
+		HEADER_ANCHOR: '[data-testid="chat-menu-trigger"], [data-testid="chat-title-split"]',
 		BRIDGE_SCRIPT_ID: 'cc-bridge-script'
 	});
 

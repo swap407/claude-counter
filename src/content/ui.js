@@ -219,7 +219,7 @@
 
 				if (headerMissing && !headerReattachPending) {
 					headerReattachPending = true;
-					CC.waitForElement(CC.DOM.CHAT_MENU_TRIGGER, 60000).then((el) => {
+					CC.waitForElement(CC.DOM.HEADER_ANCHOR, 60000).then((el) => {
 						headerReattachPending = false;
 						if (el) this.attachHeader();
 					});
@@ -322,11 +322,26 @@
 			this.refreshProgressChrome();
 		}
 
-		attachHeader() {
+		// Newer layout: chat-header > title wrapper > chat-title-split, followed by a flex-1
+		// spacer. Place the header right after the title wrapper (a direct child of chat-header).
+		// Legacy layout: after the chat menu trigger's project wrapper.
+		_findHeaderAnchor() {
+			const title = document.querySelector(CC.DOM.CHAT_TITLE);
+			const header = title?.closest(CC.DOM.CHAT_HEADER);
+			if (title && header) {
+				let cur = title;
+				while (cur.parentElement && cur.parentElement !== header) cur = cur.parentElement;
+				if (cur.parentElement === header) return cur;
+			}
 			const chatMenu = document.querySelector(CC.DOM.CHAT_MENU_TRIGGER);
-			if (!chatMenu) return;
-			const anchor = chatMenu.closest(CC.DOM.CHAT_PROJECT_WRAPPER) || chatMenu.parentElement;
+			if (!chatMenu) return null;
+			return chatMenu.closest(CC.DOM.CHAT_PROJECT_WRAPPER) || chatMenu.parentElement;
+		}
+
+		attachHeader() {
+			const anchor = this._findHeaderAnchor();
 			if (!anchor) return;
+			this.headerContainer.classList.toggle('cc-header--titlebar', !!anchor.closest(CC.DOM.CHAT_HEADER));
 			if (anchor.nextElementSibling !== this.headerContainer) {
 				anchor.after(this.headerContainer);
 			}

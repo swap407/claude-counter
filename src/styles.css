@@ -8,6 +8,13 @@
 	white-space: nowrap;
 }
 
+/* Header placed in the newer title bar, between the title and the spacer */
+.cc-header--titlebar {
+	flex-shrink: 0;
+	margin-top: 0;
+	padding-inline: 8px !important;
+}
+
 /* Usage row: session + weekly */
 .cc-usageRow {
 	position: relative;
