@@ -149,6 +149,7 @@
 	CC.DOM = Object.freeze({
 		CHAT_MENU_TRIGGER: '[data-testid="chat-menu-trigger"]',
 		MODEL_SELECTOR_DROPDOWN: '[data-testid="model-selector-dropdown"]',
+		CHAT_INPUT: '[data-testid="chat-input"]',
 		CHAT_PROJECT_WRAPPER: '.chat-project-wrapper',
 		BRIDGE_SCRIPT_ID: 'cc-bridge-script'
 	});
@@ -581,6 +582,7 @@
 			// Track pending reattach attempts independently
 			let usageReattachPending = false;
 			let headerReattachPending = false;
+			let placementCheckQueued = false;
 
 			this.domObserver = new MutationObserver(() => {
 				const usageMissing = this.usageLine && !document.contains(this.usageLine);
@@ -591,6 +593,17 @@
 					CC.waitForElement(CC.DOM.MODEL_SELECTOR_DROPDOWN, 60000).then((el) => {
 						usageReattachPending = false;
 						if (el) this.attachUsageLine();
+					});
+				}
+
+				// The composer can finish rendering after the first attach (which then falls back
+				// to a page-level spot), so move the row once the composer host appears.
+				if (!usageMissing && this.usageLine && !placementCheckQueued) {
+					placementCheckQueued = true;
+					requestAnimationFrame(() => {
+						placementCheckQueued = false;
+						const host = this._findComposerHost();
+						if (host && host.nextElementSibling !== this.usageLine) this.attachUsageLine();
 					});
 				}
 
@@ -711,6 +724,20 @@
 			this.refreshProgressChrome();
 		}
 
+		// Newer composer: the toolbar is an absolutely positioned cluster overlaid on the
+		// input, and the model selector may sit inside it (new chat) or below the card
+		// (existing chat). Anchor on the editor instead: its nearest ancestor holding any
+		// buttons is the card's inner container, so the row lands inside the card below it.
+		_findComposerHost() {
+			const editor = document.querySelector(CC.DOM.CHAT_INPUT);
+			let cur = editor?.parentElement;
+			for (let i = 0; cur && cur !== document.body && i < 8; i++) {
+				if (cur.querySelector('button')) return cur;
+				cur = cur.parentElement;
+			}
+			return null;
+		}
+
 		attachUsageLine() {
 			if (!this.usageLine) return;
 			const modelSelector = document.querySelector(CC.DOM.MODEL_SELECTOR_DROPDOWN);
@@ -733,19 +760,8 @@
 				return null;
 			};
 
-			// Newer composer: the toolbar is an absolutely positioned cluster overlaid on the
-			// input's bottom edge. Inserting the row inside it squeezes the native controls, so
-			// place the row after the cluster's positioned container (inside the composer card).
-			const findOverlayToolbar = (el) => {
-				let cur = el.parentElement;
-				for (let i = 0; cur && cur !== document.body && i < 8; i++) {
-					if (window.getComputedStyle(cur).position === 'absolute') return cur;
-					cur = cur.parentElement;
-				}
-				return null;
-			};
-			const overlayHost = findOverlayToolbar(modelSelector)?.offsetParent;
-			if (overlayHost && overlayHost !== document.body && overlayHost.parentElement) {
+			const overlayHost = this._findComposerHost();
+			if (overlayHost && overlayHost.parentElement) {
 				this.usageLine.classList.add('cc-usageRow--composer');
 				if (overlayHost.nextElementSibling !== this.usageLine) {
 					overlayHost.after(this.usageLine);
