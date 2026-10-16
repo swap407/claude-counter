@@ -344,6 +344,28 @@
 				return null;
 			};
 
+			// Newer composer: the toolbar is an absolutely positioned cluster overlaid on the
+			// input's bottom edge. Inserting the row inside it squeezes the native controls, so
+			// place the row after the cluster's positioned container (inside the composer card).
+			const findOverlayToolbar = (el) => {
+				let cur = el.parentElement;
+				for (let i = 0; cur && cur !== document.body && i < 8; i++) {
+					if (window.getComputedStyle(cur).position === 'absolute') return cur;
+					cur = cur.parentElement;
+				}
+				return null;
+			};
+			const overlayHost = findOverlayToolbar(modelSelector)?.offsetParent;
+			if (overlayHost && overlayHost !== document.body && overlayHost.parentElement) {
+				this.usageLine.classList.add('cc-usageRow--composer');
+				if (overlayHost.nextElementSibling !== this.usageLine) {
+					overlayHost.after(this.usageLine);
+				}
+				this.refreshProgressChrome();
+				return;
+			}
+			this.usageLine.classList.remove('cc-usageRow--composer');
+
 			const toolbarRow =
 				(gridContainer ? findToolbarRow(modelSelector, gridArea || gridContainer) : null) ||
 				findToolbarRow(modelSelector) ||
