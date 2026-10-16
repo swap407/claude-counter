@@ -1,8 +1,11 @@
 // ==UserScript==
-// @name         Claude Counter
-// @namespace    https://github.com/she-llac/claude-counter
+// @name         Claude Counter (swap407)
+// @namespace    https://github.com/swap407/claude-counter
 // @version      0.4.3-userscript
 // @description  Shows token count, cache timer, and usage bars on claude.ai.
+// @homepageURL  https://github.com/swap407/claude-counter
+// @updateURL    https://raw.githubusercontent.com/swap407/claude-counter/main/userscript/claude-counter.user.js
+// @downloadURL  https://raw.githubusercontent.com/swap407/claude-counter/main/userscript/claude-counter.user.js
 // @match        https://claude.ai/*
 // @run-at       document-start
 // @grant        none

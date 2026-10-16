@@ -1,4 +1,6 @@
-# Claude Counter
+# Claude Counter (swap407)
+
+Fork of [she-llac/claude-counter](https://github.com/she-llac/claude-counter), maintained at https://github.com/swap407/claude-counter.
 
 A minimal browser extension that shows token count, cache timer, and usage bars on claude.ai.
 
