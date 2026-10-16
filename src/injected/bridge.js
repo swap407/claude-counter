@@ -52,7 +52,7 @@
 
 		const contentType = response.headers.get('content-type') || '';
 		if (contentType.includes('event-stream')) {
-			handleEventStream(response);
+			handleEventStream(response, { isReply: !!url && (url.includes('/completion') || url.includes('/retry_completion')) });
 		}
 		if (url && url.includes(CONNECT_STREAM_TIMELINE)) {
 			watchStreamActivity(response);
@@ -143,7 +143,7 @@
 		fireIdle();
 	}
 
-	async function handleEventStream(response) {
+	async function handleEventStream(response, { isReply = false } = {}) {
 		try {
 			const cloned = response.clone();
 			const reader = cloned.body?.getReader?.();
@@ -172,7 +172,7 @@
 					}
 				}
 			}
-			post('cc:generation_idle', { transport: 'sse' });
+			if (isReply) post('cc:generation_idle', { transport: 'sse' });
 		} catch {
 			// best-effort; don't break claude.ai
 		}

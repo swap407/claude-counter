@@ -309,6 +309,8 @@
 		if (!data) return;
 
 		const metrics = await CC.tokens.computeConversationMetrics(data);
+		// The user may have switched chats while tokens were being counted
+		if (conversationId !== currentConversationId) return;
 		ui.setConversationMetrics(metrics);
 	}
 
