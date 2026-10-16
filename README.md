@@ -17,7 +17,12 @@
 
 Fork of [she-llac/claude-counter](https://github.com/she-llac/claude-counter), updated for the redesigned claude.ai and extended with settings, notifications and per-model limits.
 
-![Claude Counter screenshot](./screenshot.png)
+<p align="center">
+  <img src="./screenshot.png" width="600" alt="In a chat: token count and cache timer next to the title, session and weekly usage bars below the message box">
+</p>
+<p align="center">
+  <img src="./screenshot-new-chat.png" width="600" alt="New chat page: session and weekly usage bars inside the message box">
+</p>
 
 ## Features
 
