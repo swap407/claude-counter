@@ -21,6 +21,12 @@
 	opacity: 0.6;
 }
 
+/* Row placed inside the composer card, below the overlaid toolbar */
+.cc-usageRow--composer {
+	box-sizing: border-box;
+	padding: 6px 6px 2px;
+}
+
 .cc-usageGroup {
 	display: flex;
 	align-items: center;
@@ -98,6 +104,7 @@
 .cc-bar--usage {
 	height: 10px;
 	flex: 1;
+	min-width: 24px;
 }
 
 /* Tooltips */
