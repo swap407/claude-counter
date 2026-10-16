@@ -1,8 +1,21 @@
-# Claude Counter (swap407)
+<p align="center">
+  <img src="./icons/icon128.png" width="96" height="96" alt="Claude Counter logo">
+</p>
 
-Fork of [she-llac/claude-counter](https://github.com/she-llac/claude-counter), maintained at https://github.com/swap407/claude-counter.
+<h1 align="center">Claude Counter (swap407)</h1>
 
-A minimal browser extension that shows token count, cache timer, and usage bars on claude.ai.
+<p align="center">
+  Token count, cache timer and usage bars for claude.ai.<br>
+  Browser extension (Chrome, Edge, Firefox) and userscript.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/manifest-json/v/swap407/claude-counter?label=version&color=d97757" alt="version">
+  <img src="https://img.shields.io/github/license/swap407/claude-counter?color=d97757" alt="MIT license">
+  <img src="https://img.shields.io/github/last-commit/swap407/claude-counter?color=d97757" alt="last commit">
+</p>
+
+Fork of [she-llac/claude-counter](https://github.com/she-llac/claude-counter), updated for the redesigned claude.ai and extended with settings, notifications and per-model limits.
 
 ![Claude Counter screenshot](./screenshot.png)
 
