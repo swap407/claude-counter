@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Source for icons/icon*.png. Re-render with: node scripts/render-icons.mjs -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#d97757"/>
+  <!-- gauge track (270 degrees) -->
+  <path d="M60.5 187 A78 78 0 1 1 195.5 187" fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="22" stroke-linecap="round"/>
+  <!-- usage so far -->
+  <path d="M60.5 187 A78 78 0 0 1 167 80.5" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+  <!-- needle -->
+  <line x1="128" y1="148" x2="159" y2="94.3" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="128" cy="148" r="17" fill="#ffffff"/>
+</svg>
