@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude Counter
 // @namespace    https://github.com/she-llac/claude-counter
-// @version      0.4.2-userscript
+// @version      0.4.3-userscript
 // @description  Shows token count, cache timer, and usage bars on claude.ai.
 // @match        https://claude.ai/*
 // @run-at       document-start
